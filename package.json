@@ -19,6 +19,12 @@
   },
   "homepage": "https://github.com/suchet19sharma-cell/Telegram-#readme",
   "dependencies": {
-    "express": "^5.1.0"
+    "bcryptjs": "^3.0.2",
+    "body-parser": "^2.2.0",
+    "dotenv": "^17.2.1",
+    "express": "^5.1.0",
+    "express-session": "^1.18.2",
+    "mongoose": "^8.18.0",
+    "socket.io": "^4.8.1"
   }
 }
