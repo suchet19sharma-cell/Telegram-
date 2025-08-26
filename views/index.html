@@ -13,20 +13,7 @@
                 <h2>Chats</h2>
             </div>
             <ul class="chat-list">
-                <li class="chat-item active">
-                    <img src="https://i.pravatar.cc/50?img=1" alt="User Avatar">
-                    <div class="chat-info">
-                        <div class="chat-name">John Doe</div>
-                        <div class="last-message">Hello there!</div>
-                    </div>
-                </li>
-                <li class="chat-item">
-                    <img src="https://i.pravatar.cc/50?img=2" alt="User Avatar">
-                    <div class="chat-info">
-                        <div class="chat-name">Jane Smith</div>
-                        <div class="last-message">See you later!</div>
-                    </div>
-                </li>
+                <!-- User list will be populated here -->
             </ul>
         </div>
         <div class="main-content">
@@ -41,6 +28,7 @@
                     <p>Hi! How are you?</p>
                 </div>
             </div>
+            <div class="typing-indicator"></div>
             <div class="chat-input">
                 <input type="text" placeholder="Type a message...">
                 <button>Send</button>
@@ -56,6 +44,17 @@
         const sendButton = document.querySelector('.chat-input button');
         const chatMessages = document.querySelector('.chat-messages');
 
+        let typingTimer;
+        const TYPING_TIMER_LENGTH = 2000; // 2 seconds
+
+        chatInput.addEventListener('input', () => {
+            clearTimeout(typingTimer);
+            socket.emit('typing');
+            typingTimer = setTimeout(() => {
+                socket.emit('stop typing');
+            }, TYPING_TIMER_LENGTH);
+        });
+
         sendButton.addEventListener('click', () => {
             const message = chatInput.value;
             if (message) {
@@ -64,12 +63,47 @@
             }
         });
 
-        socket.on('chatMessage', (msg) => {
+        socket.on('chatMessage', (data) => {
             const messageElement = document.createElement('div');
             messageElement.classList.add('message', 'received'); // For now, all received messages are styled the same
-            messageElement.innerHTML = `<p>${msg}</p>`;
+
+            const usernameElement = document.createElement('strong');
+            usernameElement.textContent = data.username;
+
+            const messageTextElement = document.createElement('p');
+            messageTextElement.textContent = data.text;
+
+            messageElement.appendChild(usernameElement);
+            messageElement.appendChild(messageTextElement);
+
             chatMessages.appendChild(messageElement);
             chatMessages.scrollTop = chatMessages.scrollHeight;
+        });
+
+        const userList = document.querySelector('.chat-list');
+        const typingIndicator = document.querySelector('.typing-indicator');
+
+        socket.on('updateUserList', (users) => {
+            userList.innerHTML = '';
+            users.forEach(user => {
+                const userElement = document.createElement('li');
+                userElement.classList.add('chat-item');
+                userElement.innerHTML = `
+                    <img src="https://i.pravatar.cc/50?u=${user}" alt="User Avatar">
+                    <div class="chat-info">
+                        <div class="chat-name">${user}</div>
+                    </div>
+                `;
+                userList.appendChild(userElement);
+            });
+        });
+
+        socket.on('typing', (data) => {
+            typingIndicator.textContent = `${data.username} is typing...`;
+        });
+
+        socket.on('stop typing', (data) => {
+            typingIndicator.textContent = '';
         });
     </script>
 </body>

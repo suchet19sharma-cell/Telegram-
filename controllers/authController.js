@@ -1,9 +1,7 @@
 const bcrypt = require('bcryptjs');
 const path = require('path');
 
-// In-memory user store
-const users = [];
-let userIdCounter = 1;
+const mockdb = require('../mockdb');
 
 exports.getRegisterPage = (req, res) => {
     res.sendFile(path.join(__dirname, '../views/register.html'));
@@ -17,7 +15,7 @@ exports.register = async (req, res) => {
     try {
         const { username, password } = req.body;
 
-        const existingUser = users.find(u => u.username === username);
+        const existingUser = mockdb.findUserByUsername(username);
         if (existingUser) {
             return res.status(400).send('User already exists');
         }
@@ -25,12 +23,10 @@ exports.register = async (req, res) => {
         const salt = await bcrypt.genSalt(10);
         const hashedPassword = await bcrypt.hash(password, salt);
 
-        const newUser = {
-            id: userIdCounter++,
+        mockdb.createUser({
             username,
             password: hashedPassword,
-        };
-        users.push(newUser);
+        });
 
         res.redirect('/api/auth/login');
 
@@ -54,7 +50,7 @@ exports.login = async (req, res) => {
     try {
         const { username, password } = req.body;
 
-        const user = users.find(u => u.username === username);
+        const user = mockdb.findUserByUsername(username);
         if (!user) {
             return res.status(400).send('Invalid credentials');
         }
